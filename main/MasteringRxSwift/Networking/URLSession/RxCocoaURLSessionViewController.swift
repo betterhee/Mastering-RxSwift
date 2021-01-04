@@ -58,73 +58,15 @@ class RxCocoaURLSessionViewController: UIViewController {
 
 
     func fetchBookList() {
+        // RxCocoa가 제공하는 Extension을 사용하여 개선하는 방법 2가지
+        // 1. reponse 메서드 사용 : 응답을 확인하는 부분을 직접 구현하고 싶다면
+        // 2. data 메서드 사용 : 응답을 확인할 때 상태코드를 확인하는 것으로 충분하다면
 
-        let response = Observable<[Book]>.create {  observer in
-            guard let url = URL(string: booksUrlStr) else {
-                observer.onError(ApiError.badUrl)
-                return Disposables.create()
-            }
-
-            let session = URLSession.shared
-
-            let task = session.dataTask(with: url) { [weak self] (data, response, error) in
-                defer {
-                    DispatchQueue.main.async { [weak self] in
-                        self?.listTableView.reloadData()
-                        UIApplication.shared.isNetworkActivityIndicatorVisible = false
-                    }
-                }
-
-                if let error = error {
-                    observer.onError(error)
-                    return
-                }
-
-                guard let httpResponse = response as? HTTPURLResponse else {
-                    observer.onError(ApiError.invalidResponse)
-                    return
-                }
-
-                guard (200...299).contains(httpResponse.statusCode) else {
-                    observer.onError(ApiError.failed(httpResponse.statusCode))
-                    return
-                }
-
-                guard let data = data else {
-                    observer.onError(ApiError.invalidData)
-                    return
-                }
-
-                do {
-                    let decoder = JSONDecoder()
-                    let bookList = try decoder.decode(BookList.self, from: data)
-
-                    if bookList.code == 200 {
-                        observer.onNext(bookList.list)
-                    } else {
-                        observer.onNext([])
-                    }
-
-                    observer.onCompleted()
-                } catch {
-                    observer.onError(error)
-                }
-            }
-            task.resume()
-            return Disposables.create {
-                task.cancel()
-            }
-        }
-        .asDriver(onErrorJustReturn: [])
-
-        response
-            .drive(list)
-            .disposed(by: rx.disposeBag)
-
-        response
-            .map { _ in false }
-            .startWith(true)
-            .drive(UIApplication.shared.rx.isNetworkActivityIndicatorVisible)
-            .disposed(by: rx.disposeBag)
+        let response = Observable.just(booksUrlStr)
+            .map { URL(string: $0)! }
+            .map { URLRequest(url: $0) }
+            .flatMap { URLSession.shared.rx.data(request: $0) }
+            .map(BookList.parse(data: ))
+            .asDriver(onErrorJustReturn: [])
     }
 }
