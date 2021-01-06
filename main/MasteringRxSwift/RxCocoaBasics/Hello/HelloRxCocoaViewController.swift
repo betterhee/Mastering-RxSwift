@@ -20,7 +20,11 @@ class HelloRxCocoaViewController: UIViewController {
    
    override func viewDidLoad() {
       super.viewDidLoad()
-      
-      
+
+    // button을 탭하면 label을 업데이트
+    tapButton.rx.tap
+        .map { "Hello, RxCocoa" }
+        .bind(to: valueLabel.rx.text)
+        .disposed(by: bag)
    }
 }
