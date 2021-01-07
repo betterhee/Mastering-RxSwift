@@ -23,6 +23,24 @@
 import UIKit
 import RxSwift
 import RxCocoa
+// RxCocoa Traits
+// - UI에 특화된 옵저버블. 모든 작업은 메인 스케쥴러(메인 스레드)에서 실행됨. UI 업데이트 코드를 작성할 때 스케쥴러를 직접 지정할 필요 없음.
+// - 옵저버블이기때문에 UI 바인딩에서 데이터 생성자 역할을 수행 (Binder와 반대)
+//
+// - 옵저버블 시퀀스가 Error 이벤트로 인해 종료되면 UI는 더이상 업데이트 되지않음
+// - 하지만 Trait는 Error 이벤트를 전달하지 않으므로 UI가 항상 올바른 스레드에서 업데이트되는 것을 보장한다
+//
+// - 옵저버블을 구독하면 기본적으로 새로운 시퀀스로 시작
+// - Trait도 옵저버블이지만 새로운 시퀀스가 시작되지는 않고, Trait를 구독하는 모든 구독자는 동일한 시퀀스를 공유한다. = 일반 옵저버블에서 share 연산자를 사용하는 것과 동일한 방식으로 동작
+//
+// - RxCocoa를 사용할 때 Trait가 필수는 아니지만, 적극적으로 활용하는 것이 좋다.
+// - Trait를 사용하지 않고 subscribe 메소드를 사용해도 문제 없지만 코드가 지저분해지고, UI 코드가 잘못된 스레드에서 사용될 가능성이 높아짐
+
+// RxCocoa에서는 4가지 종류의 Trait를 제공
+// - ControlProperty
+// - ControlEvent
+// - Driver
+// - Signal
 
 class ControlPropertyControlEventRxCocoaViewController: UIViewController {
    
